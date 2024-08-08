@@ -38,41 +38,22 @@ class Program
             Console.WriteLine($"File not found: {pathToUtilityFunctions}");
         }
 
-        
+
 
         WritePromptToScreen("Please press the number key associated with " +
                                     "the class you wish to test");
-        int count = 0;
-        foreach (var c in classes)
-        {
-            count++;
-            WritePromptToScreen($"{count} - {c}");
-        }
-        ConsoleKey key = Console.ReadKey().Key;
-        Type classChoice = null;
-        switch (key)
-        {
-            case ConsoleKey.D1:
-                classChoice = classes[0];
-                break;
-            case ConsoleKey.D2:
-                classChoice = classes[1];
-                break;
-            case ConsoleKey.D3:
-                classChoice = classes[2];
-                break;
-            case ConsoleKey.D4:
-                classChoice = classes[3];
-                break;
-            default:
-                WritePromptToScreen("Invalid choice");
-                break;
-        };
 
-        object classInstance = Activator.CreateInstance(classChoice, null);
+        DisplayProgramElementList(classes);
+
+        Type typeChoice = ReturnProgramElementReferenceFromList(classes);
+
+
+        
+
+        object classInstance = Activator.CreateInstance(typeChoice, null);
         Console.Clear();
 
-        WriteHeadingToScreen($"Class: {classChoice}");
+        WriteHeadingToScreen($"Class: {typeChoice}");
 
         WritePromptToScreen("Please press the number key associated with " +
                                     "the method you wish to test");
@@ -93,6 +74,26 @@ class Program
 
         }
         return false;
+    }
+
+
+    private static T ReturnProgramElementReferenceFromList<T>(List<T> list)
+    {
+        ConsoleKey consoleKey = Console.ReadKey().Key;
+
+        switch (consoleKey)
+        {
+            case ConsoleKey.D1:
+                return list[0];
+            case ConsoleKey.D2:
+                return list[1];
+            case ConsoleKey.D3:
+                return list[2];
+            case ConsoleKey.D4:
+                return list[3];
+
+        }
+        return default;
     }
 
     private static void DisplayProgramElementList<T>(List<T> list)
