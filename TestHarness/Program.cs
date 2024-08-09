@@ -48,17 +48,87 @@ class Program
         Type typeChoice = ReturnProgramElementReferenceFromList(classes);
 
 
-        
+
 
         object classInstance = Activator.CreateInstance(typeChoice, null);
         Console.Clear();
 
-        WriteHeadingToScreen($"Class: {typeChoice}");
+        WriteHeadingToScreen($"Class: '{typeChoice}'");
 
         WritePromptToScreen("Please press the number key associated with " +
                                     "the method you wish to test");
 
+        List<MethodInfo> methods = typeChoice.GetMethods().Where(m => HasInformationAttribute(m)).ToList();
+
+        DisplayProgramElementList(methods);
+
+        MethodInfo methodChoice = ReturnProgramElementReferenceFromList(methods);
+
+        if (methodChoice != null)
+        {
+            Console.Clear();
+
+            WriteHeadingToScreen($"Class: '{typeChoice}' - Method: '{methodChoice.Name}'");
+
+            DisplayElementDescription(ReturnInformationCustomAttributeDescription(methodChoice));
+
+            ParameterInfo[] parameters = methodChoice.GetParameters();
+
+            object result = GetResult(classInstance, methodChoice, parameters);
+
+            WriteResultToScreen(result);
+
+
+        }
+
+        Console.WriteLine();
+        WritePromptToScreen("Please press the 'Spacebar' key to end the application " +
+            "or any other key to continue...");
+
+        //if (Console.ReadKey().Key == ConsoleKey.Spacebar)
+        //{
+        //    break;
+        //}
+
     }
+
+    private static string ReturnInformationCustomAttributeDescription(MemberInfo mi)
+    {
+        const string InformationAttributeDescriptionPropertyName = "Description";
+
+        foreach (var attrib in mi.GetCustomAttributes())
+        {
+            Type typeAttrib = attrib.GetType();
+
+            if (typeAttrib.ToString().ToUpper() == InformationAttributeTypeName)
+            {
+                PropertyInfo propertyInfo = typeAttrib.GetProperty(InformationAttributeDescriptionPropertyName);
+                if (propertyInfo != null)
+                {
+                    object s = propertyInfo.GetValue(attrib, null);
+
+                    if (s != null)
+                        return s.ToString();
+                }
+            }
+
+        }
+        return null;
+
+    }
+
+    private static void DisplayElementDescription(string elementDescription)
+    {
+        if (elementDescription != null)
+        {
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(elementDescription);
+            Console.ResetColor();
+            Console.WriteLine();
+        }
+    }
+
 
     private static bool HasInformationAttribute(MemberInfo mi)
     {
@@ -76,6 +146,33 @@ class Program
         return false;
     }
 
+
+    private static void WriteResultToScreen(object result)
+    {
+        Console.WriteLine();
+        Console.BackgroundColor = ConsoleColor.DarkGreen;
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine($"Result: {result}");
+        Console.ResetColor();
+        Console.WriteLine();
+    }
+
+    private static object GetResult(Object classInstance, MethodInfo methodInfo,
+                                        ParameterInfo[] parameters)
+    {
+        object result = null;
+
+        if (parameters.Length == 0)
+        {
+            result = methodInfo.Invoke(classInstance, null);
+        }
+        else
+        {
+            var paramValueArray = ReturnParameterValueInputAsObjectArray(parameters);
+            result = methodInfo.Invoke(classInstance, paramValueArray);
+        }
+        return result;
+    }
 
     private static T ReturnProgramElementReferenceFromList<T>(List<T> list)
     {
@@ -106,6 +203,37 @@ class Program
             Console.WriteLine($"{count}. {item}");
         }
 
+    }
+    private static object[] ReturnParameterValueInputAsObjectArray(ParameterInfo[] parameters)
+    {
+        object[] paramValues = new object[parameters.Length];
+        int itemCount = 0;
+
+        foreach (ParameterInfo parameterInfo in parameters)
+        {
+
+            WritePromptToScreen($"Please enter a value for the parameter named, '{parameterInfo.Name}'");
+
+            if (parameterInfo.ParameterType == typeof(string))
+            {
+                string inputString = Console.ReadLine();
+                paramValues[itemCount] = inputString;
+            }
+            else if (parameterInfo.ParameterType == typeof(int))
+            {
+                int inputInt = Int32.Parse(Console.ReadLine());
+                paramValues[itemCount] = inputInt;
+            }
+            else if (parameterInfo.ParameterType == typeof(double))
+            {
+                double inputDouble = Double.Parse(Console.ReadLine());
+                paramValues[itemCount] = inputDouble;
+            }
+
+            itemCount++;
+
+        }
+        return paramValues;
     }
     private static void WriteHeadingToScreen(string heading)
     {
